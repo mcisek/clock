@@ -2,18 +2,23 @@
 
 #define DS3231_I2C_ADDRESS 0x68
 
-#define A 6
-#define B 11
-#define C 9
-#define D 8
-#define E 7
-#define EF 5
-#define G 10
+#define MINUTES 51
+#define HOURS 20
 
-#define N1 
-#define N2 
-#define N3 
-#define N4
+#define A 11
+#define B 12
+#define C 5
+#define D 3
+#define E 2
+#define EF 10
+#define G 4
+
+#define N1 6
+#define N2 7
+#define N3 8
+#define N4 9
+
+int flag = 0;
 
 //*********************************DISPLAY**********************************************
 void setup_display()
@@ -214,6 +219,84 @@ void display_digit(int digit)
   }
 }
 
+void set_disp_off()
+{
+  digitalWrite(N1, HIGH);
+  digitalWrite(N2, HIGH);
+  digitalWrite(N3, HIGH);
+  digitalWrite(N4, HIGH);
+}
+
+void set_n1()
+{
+  digitalWrite(N1, LOW);
+  digitalWrite(N2, HIGH);
+  digitalWrite(N3, HIGH);
+  digitalWrite(N4, HIGH);
+}
+
+void set_n2()
+{
+  digitalWrite(N1, HIGH);
+  digitalWrite(N2, LOW);
+  digitalWrite(N3, HIGH);
+  digitalWrite(N4, HIGH);
+}
+
+void set_n3()
+{
+  digitalWrite(N1, HIGH);
+  digitalWrite(N2, HIGH);
+  digitalWrite(N3, LOW);
+  digitalWrite(N4, HIGH);
+}
+
+void set_n4()
+{
+  digitalWrite(N1, HIGH);
+  digitalWrite(N2, HIGH);
+  digitalWrite(N3, HIGH);
+  digitalWrite(N4, LOW);
+}
+
+int display_time(int h, int m)
+{
+  if(flag < 1)
+    set_disp_off();
+  else if(flag < 5)
+  {
+    display_digit((h-h%10)/10);
+    set_n1();
+  }
+  else if(flag < 6)
+    set_disp_off();
+  else if(flag < 10)
+  {
+    display_digit(h%10);
+    set_n2();
+  }
+  else if(flag < 11)
+    set_disp_off();
+  else if(flag < 15)
+  {
+    display_digit((m-m%10)/10);
+    set_n3();
+  }
+  else if(flag < 16)
+    set_disp_off();
+  else if(flag < 20)
+  {
+    display_digit(m%10);
+    set_n4();
+  }
+  else if(flag == 21)
+    flag=0;
+  else
+    set_disp_off();
+  
+  flag++;
+}
+
 
 //*****************************COMMUNICATION I2C*****************************************
 // Convert normal decimal numbers to binary coded decimal
@@ -318,12 +401,16 @@ void setup()
   setup_display();
   
   // DS3231 seconds, minutes, hours, day, date, month, year
-  setDS3231time(0,0,0,7,25,10,15);
+  setDS3231time(0,MINUTES,HOURS,7,25,10,15);
 }
 
 void loop()
 {
-  displayTime(); // display the real-time clock data on the Serial Monitor,
-  delay(1000); // every second
+  byte second, minute, hour, dayOfWeek, dayOfMonth, month, year;
+  readDS3231time(&second, &minute, &hour, &dayOfWeek, &dayOfMonth, &month, &year);
+  
+  display_time(hour, minute);
+  //displayTime(); // display the real-time clock data on the Serial Monitor,
+  //delay(1000); // every second
 }
 
